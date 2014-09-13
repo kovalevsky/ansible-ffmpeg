@@ -1,125 +1,16 @@
+---
 # Official ffmpeg compilation guide in Ansible style
 # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
 
-- name: install common dependencies
-  apt: pkg={{ item }} state=present
-  with_items:
-    - autoconf
-    - automake
-    - build-essential
-    - pkg-config
-    - git-core
+- assert:
+    that:
+      - "'{{ role_action }}' in [ 'install', 'update', 'uninstall' ]"
 
-- name: install ffmpeg stuff
-  apt: pkg={{ item }} state=present
-  with_items: ffmpeg_deps
+- include: install.yml
+  when: role_action == 'install'
 
-- name: make directories
-  file: dest={{ item }} state=directory
-  with_items:
-    - "{{ source_dir }}"
-    - "{{ bin_dir }}"
-    - "{{ build_dir }}"
+- include: update.yml
+  when: role_action == 'update'
 
-
-# Clone git repositories
-
-- name: clone latest yasm
-  git: repo=git://github.com/yasm/yasm.git dest={{ source_dir }}/yasm
-
-- name: clone latest x264
-  git: repo=git://git.videolan.org/x264.git dest={{ source_dir }}/x264
-
-- name: clone latest fdk-aac
-  git: repo=git://github.com/mstorsjo/fdk-aac.git dest={{ source_dir }}/fdk-aac
-
-- name: clone latest libvpx
-  git: repo=https://chromium.googlesource.com/webm/libvpx.git dest={{ source_dir }}/libvpx
-
-- name: clone latest ffmpeg
-  git: repo=git://source.ffmpeg.org/ffmpeg.git dest={{ source_dir }}/ffmpeg
-
-- name: clone latest opus
-  git: repo=git://git.opus-codec.org/opus.git dest={{ source_dir }}/opus
-
-- name: clone latest ffmpeg
-  git: repo=git://github.com/FFmpeg/FFmpeg.git dest={{ source_dir }}/ffmpeg
-
-
-# Compile
-
-- name: compile yasm
-  command: "{{ item }}"
-  args:
-    chdir: "{{ source_dir }}/yasm"
-    creates: "{{ bin_dir }}/yasm"
-  with_items:
-    - ./autogen.sh
-    - "./configure --prefix={{ build_dir }} --bindir={{ bin_dir }}"
-    - make
-    - make install
-    - make distclean
-
-- name: compile x264
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  args:
-    chdir: "{{ source_dir }}/x264"
-    creates: "{{ bin_dir }}/x264"
-  with_items:
-    - ./configure --prefix={{ build_dir }} --bindir={{ bin_dir }} --enable-static
-    - make
-    - make install
-    - make distclean
-
-- name: compile fdk-aac
-  command: "{{ item }}"
-  args:
-    chdir: "{{ source_dir }}/fdk-aac"
-    creates: "{{ build_dir }}/lib/libfdk-aac.a"
-  with_items:
-    - autoreconf -fiv
-    - ./configure --prefix={{ build_dir }} --disable-shared
-    - make
-    - make install
-    - make distclean
-
-- name: compile libopus
-  command: "{{ item }}"
-  args:
-    chdir: "{{ source_dir }}/opus"
-    creates: "{{ build_dir }}/lib/libopus.a"
-  with_items:
-    - ./autogen.sh
-    - ./configure --prefix={{ build_dir }} --disable-shared
-    - make
-    - make install
-    - make distclean
-
-- name: compile libvpx
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  args:
-    chdir: "{{ source_dir }}/libvpx"
-    creates: "{{ build_dir }}/lib/libvpx.a"
-  with_items:
-    - ./configure --prefix={{ build_dir }} --disable-shared
-    - make
-    - make install
-    - make clean
-
-- name: compile ffmpeg
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  args:
-    chdir: "{{ source_dir }}/ffmpeg"
-    creates: "{{ bin_dir }}/ffmpeg"
-  with_items:
-    - ./configure --prefix={{ build_dir }} --extra-cflags=-I{{ build_dir }}/include --extra-ldflags=-L{{ build_dir }}/lib --bindir={{ bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-nonfree
-    - make
-    - make install
-    - make distclean
-
-- name: update manpath map
-  shell: 'echo "MANPATH_MAP {{ bin_dir }} {{ build_dir }}/share/man" >> {{ ansible_ssh_user_home }}/.manpath'
-  tags: manpath
+- include: uninstall.yml
+  when: role_action == 'uninstall'

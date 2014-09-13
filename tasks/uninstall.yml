@@ -1,0 +1,23 @@
+---
+- name: remove ffmpeg dirs
+  file: name={{ item }} state=absent
+  with_items:
+    - "{{ build_dir }}"
+    - "{{ source_dir }}"
+    - "{{ bin_dir }}/ffmpeg"
+    - "{{ bin_dir }}/ffprobe"
+    - "{{ bin_dir }}/ffserver"
+    - "{{ bin_dir }}/vsyasm"
+    - "{{ bin_dir }}/x264"
+    - "{{ bin_dir }}/yasm"
+    - "{{ bin_dir }}/ytasm"
+  tags:
+    - remove_dirs
+
+- name: remove deps
+  shell: "apt-get autoremove {{ item }}"
+  with_items: ffmpeg_deps
+  when: remove_deps
+
+- name: remove manpath map
+  shell: sed -i '/ffmpeg_build/c\' {{ ansible_ssh_user_home }}/.manpath

@@ -28,3 +28,5 @@ ffmpeg_deps:
   - texi2html
   - zlib1g-dev
   - libmp3lame-dev
+
+role_action: 'install'
