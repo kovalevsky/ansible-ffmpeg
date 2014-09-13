@@ -1,0 +1,30 @@
+---
+# defaults file for ffmpeg build role
+ansible_ssh_user_home: "/home/{{ ansible_ssh_user }}"
+
+build_dir: "{{ ansible_ssh_user_home }}/build_dir"
+source_dir: "{{ ansible_ssh_user_home }}/ffmpeg_sources"
+bin_dir: "{{ ansible_ssh_user_home }}/bin"
+x264_version: snapshot
+libopus_version: 1.1
+libvpx_version: 1.3.0
+ffmpeg_version: snapshot
+ffmpeg_env:
+  PKG_CONFIG_PATH: "{{ build_dir }}/lib/pkgconfig"
+
+ffmpeg_deps:
+  - libass-dev
+  - libfreetype6-dev
+  - libgpac-dev
+  - libsdl1.2-dev
+  - libtheora-dev
+  - libtool
+  - libva-dev
+  - libvdpau-dev
+  - libvorbis-dev
+  - libx11-dev
+  - libxext-dev
+  - libxfixes-dev
+  - texi2html
+  - zlib1g-dev
+  - libmp3lame-dev
