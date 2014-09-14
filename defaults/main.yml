@@ -1,16 +1,12 @@
 ---
 # defaults file for ffmpeg build role
-ansible_ssh_user_home: "/home/{{ ansible_ssh_user }}"
+ffmpeg_root_dir: "/home/{{ ansible_ssh_user }}"
 
-build_dir: "{{ ansible_ssh_user_home }}/build_dir"
-source_dir: "{{ ansible_ssh_user_home }}/ffmpeg_sources"
-bin_dir: "{{ ansible_ssh_user_home }}/bin"
-x264_version: snapshot
-libopus_version: 1.1
-libvpx_version: 1.3.0
-ffmpeg_version: snapshot
+ffmpeg_build_dir: "{{ ffmpeg_root_dir }}/ffmpeg_build_dir"
+ffmpeg_source_dir: "{{ ffmpeg_root_dir }}/ffmpeg_sources"
+ffmpeg_bin_dir: "{{ ffmpeg_root_dir }}/bin"
 ffmpeg_env:
-  PKG_CONFIG_PATH: "{{ build_dir }}/lib/pkgconfig"
+  PKG_CONFIG_PATH: "{{ ffmpeg_build_dir }}/lib/pkgconfig"
 
 ffmpeg_deps:
   - libass-dev
@@ -29,4 +25,5 @@ ffmpeg_deps:
   - zlib1g-dev
   - libmp3lame-dev
 
-role_action: 'install'
+ffmpeg_role_action: 'install'
+ffmpeg_remove_deps: false

@@ -1,16 +1,8 @@
----
 # Official ffmpeg compilation guide in Ansible style
 # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
 
 - assert:
     that:
-      - "'{{ role_action }}' in [ 'install', 'update', 'uninstall' ]"
+      - "{{ ffmpeg_role_action }} in [ 'install', 'uninstall', 'update']"
 
 - include: install.yml
-  when: role_action == 'install'
-
-- include: update.yml
-  when: role_action == 'update'
-
-- include: uninstall.yml
-  when: role_action == 'uninstall'
