@@ -24,25 +24,46 @@
 # Clone git repositories
 
 - name: clone latest yasm
-  git: repo=git://github.com/yasm/yasm.git dest={{ ffmpeg_source_dir }}/yasm
+  git: >
+    repo=git://github.com/yasm/yasm.git
+    dest={{ ffmpeg_source_dir }}/yasm
+    accept_hostkey=true
 
 - name: clone latest x264
-  git: repo=git://git.videolan.org/x264.git dest={{ ffmpeg_source_dir }}/x264
+  git: >
+    repo=git://git.videolan.org/x264.git
+    dest={{ ffmpeg_source_dir }}/x264
+    accept_hostkey=true
 
 - name: clone latest fdk-aac
-  git: repo=git://github.com/mstorsjo/fdk-aac.git dest={{ ffmpeg_source_dir }}/fdk-aac
+  git: >
+    repo=git://github.com/mstorsjo/fdk-aac.git
+    dest={{ ffmpeg_source_dir }}/fdk-aac
+    accept_hostkey=true
 
 - name: clone latest libvpx
-  git: repo=https://chromium.googlesource.com/webm/libvpx.git dest={{ ffmpeg_source_dir }}/libvpx
+  git: >
+    repo=https://chromium.googlesource.com/webm/libvpx.git
+    dest={{ ffmpeg_source_dir }}/libvpx
+    accept_hostkey=true
 
 - name: clone latest ffmpeg
-  git: repo=git://source.ffmpeg.org/ffmpeg.git dest={{ ffmpeg_source_dir }}/ffmpeg
+  git: >
+    repo=git://source.ffmpeg.org/ffmpeg.git
+    dest={{ ffmpeg_source_dir }}/ffmpeg
+    accept_hostkey=true
 
 - name: clone latest opus
-  git: repo=git://git.opus-codec.org/opus.git dest={{ ffmpeg_source_dir }}/opus
+  git: >
+    repo=git://git.opus-codec.org/opus.git
+    dest={{ ffmpeg_source_dir }}/opus
+    accept_hostkey=true
 
 - name: clone latest ffmpeg
-  git: repo=git://github.com/FFmpeg/FFmpeg.git dest={{ ffmpeg_source_dir }}/ffmpeg
+  git: >
+    repo=git://github.com/FFmpeg/FFmpeg.git
+    dest={{ ffmpeg_source_dir }}/ffmpeg
+    accept_hostkey=true
 
 
 # Compile
