@@ -1,7 +1,7 @@
 ---
 
 - name: install common dependencies
-  apt: pkg={{ item }} state=present
+  apt: name={{ item }} state=present update_cache=true
   with_items:
     - autoconf
     - automake
@@ -10,7 +10,7 @@
     - git-core
 
 - name: install ffmpeg stuff
-  apt: pkg={{ item }} state=present
+  apt: name={{ item }} state=present
   with_items: ffmpeg_deps
 
 - name: make directories
