@@ -3,6 +3,6 @@
 
 - assert:
     that:
-      - "{{ ffmpeg_role_action }} in [ 'install', 'uninstall', 'update']"
+      - "'{{ ffmpeg_role_action }}' in [ 'install', 'uninstall', 'update']"
 
 - include: install.yml
