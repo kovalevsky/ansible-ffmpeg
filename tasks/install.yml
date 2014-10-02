@@ -114,7 +114,7 @@
     chdir: "{{ ffmpeg_source_dir }}/ffmpeg"
     creates: "{{ ffmpeg_bin_dir }}/ffmpeg"
   with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-nonfree
+    - ./configure --prefix={{ ffmpeg_build_dir }} --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libfaac --enable-nonfree
     - make
     - make install
     - make distclean
