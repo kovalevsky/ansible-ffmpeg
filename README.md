@@ -1,5 +1,7 @@
 # Ansible Role for FFmpeg
 
+[![Build Status](https://travis-ci.org/kovalevsky/ansible-ffmpeg.svg)](https://travis-ci.org/kovalevsky/ansible-ffmpeg)
+
 A Role to compile FFmpeg and it's major dependencies from sources and install it all. Supports updating and removing.
 Based on official FFmpeg [compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu).
 
