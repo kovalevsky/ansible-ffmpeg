@@ -45,18 +45,18 @@
     dest={{ ffmpeg_source_dir }}/fdk-aac
     accept_hostkey=true
 
+- name: clone latest vo-aacenc
+  sudo: no
+  git: >
+    repo=git://github.com/mstorsjo/vo-aacenc.git
+    dest={{ ffmpeg_source_dir }}/vo-aacenc
+    accept_hostkey=true
+
 - name: clone latest libvpx
   sudo: no
   git: >
     repo=https://chromium.googlesource.com/webm/libvpx.git
     dest={{ ffmpeg_source_dir }}/libvpx
-    accept_hostkey=true
-
-- name: clone latest ffmpeg
-  sudo: no
-  git: >
-    repo=git://source.ffmpeg.org/ffmpeg.git
-    dest={{ ffmpeg_source_dir }}/ffmpeg
     accept_hostkey=true
 
 - name: clone latest opus
@@ -116,6 +116,19 @@
     - make install
     - make distclean
 
+- name: compile vo-aacenc
+  environment: ffmpeg_env
+  command: "{{ item }}"
+  sudo: no
+  args:
+    chdir: "{{ ffmpeg_source_dir }}/vo-aacenc"
+  with_items:
+    - autoreconf -fiv
+    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
+    - make
+    - make install
+    - make distclean
+
 - name: compile libopus
   environment: ffmpeg_env
   command: "{{ item }}"
@@ -151,7 +164,7 @@
     chdir: "{{ ffmpeg_source_dir }}/ffmpeg"
     creates: "{{ ffmpeg_bin_dir }}/ffmpeg"
   with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libfaac --enable-nonfree
+    - ./configure --prefix={{ ffmpeg_build_dir }} --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libfaac --enable-nonfree --enable-libvo-aacenc
     - make
     - make install
     - make distclean
