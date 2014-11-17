@@ -7,6 +7,7 @@ ffmpeg_source_dir: "{{ ffmpeg_root_dir }}/ffmpeg_sources"
 ffmpeg_bin_dir: "{{ ffmpeg_root_dir }}/bin"
 ffmpeg_env:
   PKG_CONFIG_PATH: "{{ ffmpeg_build_dir }}/lib/pkgconfig"
+  PATH: "{{ ffmpeg_bin_dir }}:{{ ansible_env.PATH }}"
 
 ffmpeg_deps:
   - libass-dev

@@ -15,6 +15,7 @@
 
 - name: make directories
   file: dest={{ item }} state=directory
+  sudo: no
   with_items:
     - "{{ ffmpeg_source_dir }}"
     - "{{ ffmpeg_bin_dir }}"
@@ -24,42 +25,49 @@
 # Clone git repositories
 
 - name: clone latest yasm
+  sudo: no
   git: >
     repo=git://github.com/yasm/yasm.git
     dest={{ ffmpeg_source_dir }}/yasm
     accept_hostkey=true
 
 - name: clone latest x264
+  sudo: no
   git: >
     repo=git://git.videolan.org/x264.git
     dest={{ ffmpeg_source_dir }}/x264
     accept_hostkey=true
 
 - name: clone latest fdk-aac
+  sudo: no
   git: >
     repo=git://github.com/mstorsjo/fdk-aac.git
     dest={{ ffmpeg_source_dir }}/fdk-aac
     accept_hostkey=true
 
 - name: clone latest libvpx
+  sudo: no
   git: >
     repo=https://chromium.googlesource.com/webm/libvpx.git
     dest={{ ffmpeg_source_dir }}/libvpx
     accept_hostkey=true
 
 - name: clone latest ffmpeg
+  sudo: no
   git: >
     repo=git://source.ffmpeg.org/ffmpeg.git
     dest={{ ffmpeg_source_dir }}/ffmpeg
     accept_hostkey=true
 
 - name: clone latest opus
+  sudo: no
   git: >
     repo=git://git.opus-codec.org/opus.git
     dest={{ ffmpeg_source_dir }}/opus
     accept_hostkey=true
 
 - name: clone latest ffmpeg
+  sudo: no
   git: >
     repo=git://github.com/FFmpeg/FFmpeg.git
     dest={{ ffmpeg_source_dir }}/ffmpeg
@@ -79,10 +87,12 @@
     - make
     - make install
     - make distclean
+  sudo: no
 
 - name: compile x264
   environment: ffmpeg_env
   command: "{{ item }}"
+  sudo: no
   args:
     chdir: "{{ ffmpeg_source_dir }}/x264"
     creates: "{{ ffmpeg_bin_dir }}/x264"
@@ -93,7 +103,9 @@
     - make distclean
 
 - name: compile fdk-aac
+  environment: ffmpeg_env
   command: "{{ item }}"
+  sudo: no
   args:
     chdir: "{{ ffmpeg_source_dir }}/fdk-aac"
     creates: "{{ ffmpeg_build_dir }}/lib/libfdk-aac.a"
@@ -105,7 +117,9 @@
     - make distclean
 
 - name: compile libopus
+  environment: ffmpeg_env
   command: "{{ item }}"
+  sudo: no
   args:
     chdir: "{{ ffmpeg_source_dir }}/opus"
     creates: "{{ ffmpeg_build_dir }}/lib/libopus.a"
@@ -127,10 +141,12 @@
     - make
     - make install
     - make clean
+  sudo: no
 
 - name: compile ffmpeg
   environment: ffmpeg_env
   command: "{{ item }}"
+  sudo: no
   args:
     chdir: "{{ ffmpeg_source_dir }}/ffmpeg"
     creates: "{{ ffmpeg_bin_dir }}/ffmpeg"
