@@ -26,6 +26,8 @@ ffmpeg_deps:
   - zlib1g-dev
   - libmp3lame-dev
   - libfaac-dev
+  - libopencore-amrnb-dev 
+  - libopencore-amrwb-dev 
 
 ffmpeg_role_action: 'install'
 ffmpeg_remove_deps: false
