@@ -26,22 +26,16 @@ Defaults is:
     ffmpeg_env:
       PKG_CONFIG_PATH: "{{ ffmpeg_build_dir }}/lib/pkgconfig"
 
-    ffmpeg_deps:
-      - libass-dev
-      - libfreetype6-dev
-      - libgpac-dev
-      - libsdl1.2-dev
-      - libtheora-dev
-      - libtool
-      - libva-dev
-      - libvdpau-dev
-      - libvorbis-dev
-      - libx11-dev
-      - libxext-dev
-      - libxfixes-dev
-      - texi2html
-      - zlib1g-dev
-      - libmp3lame-dev
+ffmpeg_deps:
+  - cmake
+  - libass-dev
+  - libfreetype6-dev
+  - libtheora-dev
+  - libtool
+  - libvorbis-dev
+  - pkg-config 
+  - texi2html
+  - zlib1g-dev
 
 Description: 
 
