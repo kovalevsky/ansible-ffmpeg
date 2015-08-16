@@ -38,32 +38,47 @@
     dest={{ ffmpeg_source_dir }}/x264
     accept_hostkey=true
 
+- name: clone latest x265
+  sudo: no
+  git: >
+    repo=https://github.com/videolan/x265.git
+    dest={{ ffmpeg_source_dir }}/x265
+    accept_hostkey=true
+
 - name: clone latest fdk-aac
   sudo: no
   git: >
-    repo=git://github.com/mstorsjo/fdk-aac.git
+    repo=https://github.com/mstorsjo/fdk-aac.git
     dest={{ ffmpeg_source_dir }}/fdk-aac
     accept_hostkey=true
 
-- name: clone latest vo-aacenc
+- name: clone latest libmp3lame
   sudo: no
   git: >
-    repo=git://github.com/mstorsjo/vo-aacenc.git
-    dest={{ ffmpeg_source_dir }}/vo-aacenc
+    repo=https://github.com/gypified/libmp3lame.git
+    dest={{ ffmpeg_source_dir }}/libmp3lame
     accept_hostkey=true
+
+- name: download opus tarball
+  sudo: no
+  get_url:
+    url="http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz"
+    dest={{ ffmpeg_source_dir }}
+  register: opus_archive
+
+- name: unarchive opus tarball
+  sudo: no
+  unarchive:
+    src="{{ ffmpeg_source_dir }}/opus-1.1.tar.gz"
+    dest={{ ffmpeg_source_dir }}
+    copy=no
+  when: opus_archive|changed
 
 - name: clone latest libvpx
   sudo: no
   git: >
     repo=https://chromium.googlesource.com/webm/libvpx.git
     dest={{ ffmpeg_source_dir }}/libvpx
-    accept_hostkey=true
-
-- name: clone latest opus
-  sudo: no
-  git: >
-    repo=git://git.opus-codec.org/opus.git
-    dest={{ ffmpeg_source_dir }}/opus
     accept_hostkey=true
 
 - name: clone latest ffmpeg
@@ -102,6 +117,20 @@
     - make install
     - make distclean
 
+
+- name: compile x265
+  environment: ffmpeg_env
+  command: "{{ item }}"
+  sudo: no
+  args:
+    chdir: "{{ ffmpeg_source_dir }}/x265/build/linux"
+    creates: "{{ ffmpeg_bin_dir }}/x265"
+  with_items:
+    - cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX={{ ffmpeg_build_dir }} -DENABLE_SHARED:bool=off ../../source
+    - make
+    - make install
+    - make clean
+
 - name: compile fdk-aac
   environment: ffmpeg_env
   command: "{{ item }}"
@@ -116,15 +145,15 @@
     - make install
     - make distclean
 
-- name: compile vo-aacenc
+- name: compile libmp3lame
   environment: ffmpeg_env
   command: "{{ item }}"
   sudo: no
   args:
-    chdir: "{{ ffmpeg_source_dir }}/vo-aacenc"
+    chdir: "{{ ffmpeg_source_dir }}/libmp3lame"
+    creates: "{{ ffmpeg_build_dir }}/libmp3lame"
   with_items:
-    - autoreconf -fiv
-    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
+    - ./configure --prefix={{ ffmpeg_build_dir }} --enable-nasm --disable-shared
     - make
     - make install
     - make distclean
@@ -134,10 +163,9 @@
   command: "{{ item }}"
   sudo: no
   args:
-    chdir: "{{ ffmpeg_source_dir }}/opus"
+    chdir: "{{ ffmpeg_source_dir }}/opus-1.1"
     creates: "{{ ffmpeg_build_dir }}/lib/libopus.a"
   with_items:
-    - ./autogen.sh
     - ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
     - make
     - make install
@@ -148,9 +176,9 @@
   command: "{{ item }}"
   args:
     chdir: "{{ ffmpeg_source_dir }}/libvpx"
-    creates: "{{ ffmpeg_build_dir }}/lib/libvpx.a"
+    creates: "{{ ffmpeg_build_dir }}/libvpx"
   with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
+    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-examples --disable-unit-tests
     - make
     - make install
     - make clean
@@ -164,7 +192,7 @@
     chdir: "{{ ffmpeg_source_dir }}/ffmpeg"
     creates: "{{ ffmpeg_bin_dir }}/ffmpeg"
   with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libfaac --enable-nonfree --enable-libvo-aacenc --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-version3
+    - ./configure --prefix={{ ffmpeg_build_dir }} --pkg-config-flags="--static" --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree
     - make
     - make install
     - make distclean

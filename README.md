@@ -27,21 +27,15 @@ Defaults is:
       PKG_CONFIG_PATH: "{{ ffmpeg_build_dir }}/lib/pkgconfig"
 
     ffmpeg_deps:
+      - cmake
       - libass-dev
       - libfreetype6-dev
-      - libgpac-dev
-      - libsdl1.2-dev
       - libtheora-dev
       - libtool
-      - libva-dev
-      - libvdpau-dev
       - libvorbis-dev
-      - libx11-dev
-      - libxext-dev
-      - libxfixes-dev
+      - pkg-config 
       - texi2html
       - zlib1g-dev
-      - libmp3lame-dev
 
 Description: 
 
