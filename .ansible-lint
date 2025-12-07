@@ -1,0 +1,14 @@
+---
+profile: production
+
+exclude_paths:
+  - .github/
+  - molecule/
+
+skip_list:
+  - role-name  # Role name doesn't match pattern
+  - no-changed-when  # Commands with 'creates' are idempotent
+  - latest[git]  # We intentionally clone latest for source compilation
+
+warn_list:
+  - command-instead-of-shell
