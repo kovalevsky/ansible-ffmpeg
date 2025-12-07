@@ -6,4 +6,4 @@
     ffmpeg_root_dir: /root
 
   roles:
-    - role: ansible-ffmpeg
+    - role: "{{ playbook_dir }}/../.."

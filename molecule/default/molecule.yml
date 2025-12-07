@@ -38,6 +38,9 @@ provisioner:
   playbooks:
     converge: converge.yml
     verify: verify.yml
+  config_options:
+    defaults:
+      roles_path: ../../
   inventory:
     host_vars:
       ubuntu2204:
