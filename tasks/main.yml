@@ -1,8 +1,22 @@
-# Official ffmpeg compilation guide in Ansible style
+---
+# Main task dispatcher for FFmpeg role
 # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
 
-- assert:
+- name: Validate ffmpeg_role_action
+  ansible.builtin.assert:
     that:
-      - "'{{ ffmpeg_role_action }}' in [ 'install', 'uninstall', 'update']"
+      - ffmpeg_role_action in ['install', 'uninstall', 'update']
+    fail_msg: "ffmpeg_role_action must be one of: install, uninstall, update"
+    quiet: true
 
-- include: install.yml
+- name: Install FFmpeg
+  ansible.builtin.include_tasks: install.yml
+  when: ffmpeg_role_action == 'install'
+
+- name: Uninstall FFmpeg
+  ansible.builtin.include_tasks: uninstall.yml
+  when: ffmpeg_role_action == 'uninstall'
+
+- name: Update FFmpeg
+  ansible.builtin.include_tasks: update.yml
+  when: ffmpeg_role_action == 'update'

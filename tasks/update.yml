@@ -1,5 +1,13 @@
 ---
+# Update FFmpeg by reinstalling
 
-- include: uninstall.yml tags=remove_dirs
+- name: Remove existing installation
+  ansible.builtin.include_tasks: uninstall.yml
+  args:
+    apply:
+      tags:
+        - remove_dirs
+        - remove_binaries
 
-- include: install.yml
+- name: Install fresh FFmpeg
+  ansible.builtin.include_tasks: install.yml

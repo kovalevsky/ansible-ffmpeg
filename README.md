@@ -1,58 +1,114 @@
-# Ansible Role for FFmpeg
+# Ansible Role: FFmpeg
 
-[![Build Status](https://travis-ci.org/kovalevsky/ansible-ffmpeg.svg)](https://travis-ci.org/kovalevsky/ansible-ffmpeg)
+Installs FFmpeg on Ubuntu/Debian systems. Supports both system packages (fast) and compilation from source (full control).
 
-A Role to compile FFmpeg and it's major dependencies from sources and install it all. Supports updating and removing.
-Based on official FFmpeg [compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu).
+Based on the official FFmpeg [compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu).
 
-Requirements
-------------
+## Requirements
 
-none
+- Ansible 2.10+
+- Ubuntu 20.04+ or Debian 11+
 
-Role Variables
-------------
+## Installation
 
-Defaults is:
+```bash
+ansible-galaxy install kovalevsky.ffmpeg
+```
 
-    ffmpeg_role_action: 'install'
-    ffmpeg_remove_deps: false
+Or add to `requirements.yml`:
 
-    ffmpeg_root_dir: "~{{ ansible_ssh_user }}"
+```yaml
+roles:
+  - name: kovalevsky.ffmpeg
+    src: https://github.com/kovalevsky/ansible-ffmpeg
+```
 
-    ffmpeg_build_dir: "{{ ffmpeg_root_dir }}/ffmpeg_build_dir"
-    ffmpeg_source_dir: "{{ ffmpeg_root_dir }}/ffmpeg_sources"
-    ffmpeg_bin_dir: "{{ ffmpeg_root_dir }}/bin"
-    ffmpeg_env:
-      PKG_CONFIG_PATH: "{{ ffmpeg_build_dir }}/lib/pkgconfig"
+## Role Variables
 
-    ffmpeg_deps:
-      - cmake
-      - libass-dev
-      - libfreetype6-dev
-      - libtheora-dev
-      - libtool
-      - libvorbis-dev
-      - pkg-config 
-      - texi2html
-      - zlib1g-dev
+### Basic Configuration
 
-Description: 
+```yaml
+# Action: install, uninstall, or update
+ffmpeg_role_action: install
 
-- `ffmpeg_role_action` – install, uninstall or update FFmpeg installed from this role, default: 'install'. 
-- `ffmpeg_remove_deps` – Remove dependencies installed from apt, default: false.
+# Use system packages (fast) or compile from source
+ffmpeg_compile_codecs: false
 
-Dependencies
-------------
+# Remove apt dependencies on uninstall
+ffmpeg_remove_deps: false
+```
 
-none
+### Directory Configuration
 
-License
-------------
+```yaml
+ffmpeg_root_dir: "/home/{{ ansible_user }}"
+ffmpeg_build_dir: "{{ ffmpeg_root_dir }}/ffmpeg_build"
+ffmpeg_source_dir: "{{ ffmpeg_root_dir }}/ffmpeg_sources"
+ffmpeg_bin_dir: "{{ ffmpeg_root_dir }}/bin"
+```
 
-BSD
+### Compilation Options
 
-Author Information
-------------------
+When `ffmpeg_compile_codecs: true`, FFmpeg is compiled with these libraries:
+- x264 (H.264 encoder)
+- x265 (HEVC encoder)
+- fdk-aac (AAC encoder)
+- opus (Opus codec)
+- libvpx (VP8/VP9)
 
-[Sergey Kovalevsky](http://github.com/kovalevsky)
+## Example Playbook
+
+### Quick install (system packages)
+
+```yaml
+- hosts: servers
+  roles:
+    - role: kovalevsky.ffmpeg
+```
+
+### Compile from source
+
+```yaml
+- hosts: servers
+  roles:
+    - role: kovalevsky.ffmpeg
+      ffmpeg_compile_codecs: true
+```
+
+### Uninstall
+
+```yaml
+- hosts: servers
+  roles:
+    - role: kovalevsky.ffmpeg
+      ffmpeg_role_action: uninstall
+      ffmpeg_remove_deps: true
+```
+
+## Testing
+
+This role uses Molecule for testing:
+
+```bash
+# Install dependencies
+pip install molecule molecule-docker ansible-lint
+
+# Run tests
+molecule test
+```
+
+## Supported Platforms
+
+- Ubuntu 20.04 (Focal)
+- Ubuntu 22.04 (Jammy)
+- Ubuntu 24.04 (Noble)
+- Debian 11 (Bullseye)
+- Debian 12 (Bookworm)
+
+## License
+
+BSD-3-Clause
+
+## Author
+
+[Sergey Kovalevsky](https://github.com/kovalevsky) / HttpLab

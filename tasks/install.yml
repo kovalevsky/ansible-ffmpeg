@@ -1,202 +1,172 @@
 ---
+# Install FFmpeg and dependencies
 
-- name: install common dependencies
-  apt: name={{ item }} state=present update_cache=true
-  with_items:
-    - autoconf
-    - automake
-    - build-essential
-    - pkg-config
-    - git-core
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
 
-- name: install ffmpeg stuff
-  apt: name={{ item }} state=present
-  with_items: ffmpeg_deps
+- name: Install build dependencies
+  ansible.builtin.apt:
+    name: "{{ ffmpeg_build_deps }}"
+    state: present
+  become: true
 
-- name: make directories
-  file: dest={{ item }} state=directory
-  sudo: no
-  with_items:
+- name: Install library dependencies
+  ansible.builtin.apt:
+    name: "{{ ffmpeg_lib_deps }}"
+    state: present
+  become: true
+
+- name: Create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
     - "{{ ffmpeg_source_dir }}"
     - "{{ ffmpeg_bin_dir }}"
     - "{{ ffmpeg_build_dir }}"
 
+# Use system FFmpeg package (fast, for testing)
+- name: Install FFmpeg from system packages
+  when: not ffmpeg_compile_codecs
+  block:
+    - name: Install ffmpeg package
+      ansible.builtin.apt:
+        name: ffmpeg
+        state: present
+      become: true
 
-# Clone git repositories
+    - name: Create symlink to system ffmpeg
+      ansible.builtin.file:
+        src: /usr/bin/ffmpeg
+        dest: "{{ ffmpeg_bin_dir }}/ffmpeg"
+        state: link
 
-- name: clone latest yasm
-  sudo: no
-  git: >
-    repo=git://github.com/yasm/yasm.git
-    dest={{ ffmpeg_source_dir }}/yasm
-    accept_hostkey=true
+    - name: Create symlink to system ffprobe
+      ansible.builtin.file:
+        src: /usr/bin/ffprobe
+        dest: "{{ ffmpeg_bin_dir }}/ffprobe"
+        state: link
 
-- name: clone latest x264
-  sudo: no
-  git: >
-    repo=git://git.videolan.org/x264.git
-    dest={{ ffmpeg_source_dir }}/x264
-    accept_hostkey=true
+# Compile from source (slow, for production)
+- name: Compile FFmpeg from source
+  when: ffmpeg_compile_codecs
+  block:
+    - name: Clone x264
+      ansible.builtin.git:
+        repo: https://code.videolan.org/videolan/x264.git
+        dest: "{{ ffmpeg_source_dir }}/x264"
+        depth: 1
 
-- name: clone latest x265
-  sudo: no
-  git: >
-    repo=https://github.com/videolan/x265.git
-    dest={{ ffmpeg_source_dir }}/x265
-    accept_hostkey=true
+    - name: Compile x264
+      ansible.builtin.shell: |
+        ./configure --prefix={{ ffmpeg_build_dir }} --bindir={{ ffmpeg_bin_dir }} --enable-static --enable-pic
+        make -j$(nproc)
+        make install
+      args:
+        chdir: "{{ ffmpeg_source_dir }}/x264"
+        creates: "{{ ffmpeg_build_dir }}/lib/libx264.a"
+      environment: "{{ ffmpeg_env }}"
 
-- name: clone latest fdk-aac
-  sudo: no
-  git: >
-    repo=https://github.com/mstorsjo/fdk-aac.git
-    dest={{ ffmpeg_source_dir }}/fdk-aac
-    accept_hostkey=true
+    - name: Clone x265
+      ansible.builtin.git:
+        repo: https://bitbucket.org/multicoreware/x265_git.git
+        dest: "{{ ffmpeg_source_dir }}/x265"
+        depth: 1
 
-- name: clone latest libmp3lame
-  sudo: no
-  git: >
-    repo=https://github.com/gypified/libmp3lame.git
-    dest={{ ffmpeg_source_dir }}/libmp3lame
-    accept_hostkey=true
+    - name: Compile x265
+      ansible.builtin.shell: |
+        cd build/linux
+        cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX={{ ffmpeg_build_dir }} -DENABLE_SHARED=off ../../source
+        make -j$(nproc)
+        make install
+      args:
+        chdir: "{{ ffmpeg_source_dir }}/x265"
+        creates: "{{ ffmpeg_build_dir }}/lib/libx265.a"
+      environment: "{{ ffmpeg_env }}"
 
-- name: download opus tarball
-  sudo: no
-  get_url:
-    url="http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz"
-    dest={{ ffmpeg_source_dir }}
-  register: opus_archive
+    - name: Clone fdk-aac
+      ansible.builtin.git:
+        repo: https://github.com/mstorsjo/fdk-aac.git
+        dest: "{{ ffmpeg_source_dir }}/fdk-aac"
+        depth: 1
 
-- name: unarchive opus tarball
-  sudo: no
-  unarchive:
-    src="{{ ffmpeg_source_dir }}/opus-1.1.tar.gz"
-    dest={{ ffmpeg_source_dir }}
-    copy=no
-  when: opus_archive|changed
+    - name: Compile fdk-aac
+      ansible.builtin.shell: |
+        autoreconf -fiv
+        ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
+        make -j$(nproc)
+        make install
+      args:
+        chdir: "{{ ffmpeg_source_dir }}/fdk-aac"
+        creates: "{{ ffmpeg_build_dir }}/lib/libfdk-aac.a"
+      environment: "{{ ffmpeg_env }}"
 
-- name: clone latest libvpx
-  sudo: no
-  git: >
-    repo=https://chromium.googlesource.com/webm/libvpx.git
-    dest={{ ffmpeg_source_dir }}/libvpx
-    accept_hostkey=true
+    - name: Download opus
+      ansible.builtin.get_url:
+        url: "https://downloads.xiph.org/releases/opus/opus-{{ ffmpeg_opus_version }}.tar.gz"
+        dest: "{{ ffmpeg_source_dir }}/opus-{{ ffmpeg_opus_version }}.tar.gz"
+        mode: "0644"
 
-- name: clone latest ffmpeg
-  sudo: no
-  git: >
-    repo=git://github.com/FFmpeg/FFmpeg.git
-    dest={{ ffmpeg_source_dir }}/ffmpeg
-    accept_hostkey=true
+    - name: Extract opus
+      ansible.builtin.unarchive:
+        src: "{{ ffmpeg_source_dir }}/opus-{{ ffmpeg_opus_version }}.tar.gz"
+        dest: "{{ ffmpeg_source_dir }}"
+        remote_src: true
+        creates: "{{ ffmpeg_source_dir }}/opus-{{ ffmpeg_opus_version }}"
 
+    - name: Compile opus
+      ansible.builtin.shell: |
+        ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
+        make -j$(nproc)
+        make install
+      args:
+        chdir: "{{ ffmpeg_source_dir }}/opus-{{ ffmpeg_opus_version }}"
+        creates: "{{ ffmpeg_build_dir }}/lib/libopus.a"
+      environment: "{{ ffmpeg_env }}"
 
-# Compile
+    - name: Clone libvpx
+      ansible.builtin.git:
+        repo: https://chromium.googlesource.com/webm/libvpx.git
+        dest: "{{ ffmpeg_source_dir }}/libvpx"
+        depth: 1
 
-- name: compile yasm
-  command: "{{ item }}"
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/yasm"
-    creates: "{{ ffmpeg_bin_dir }}/yasm"
-  with_items:
-    - ./autogen.sh
-    - "./configure --prefix={{ ffmpeg_build_dir }} --bindir={{ ffmpeg_bin_dir }}"
-    - make
-    - make install
-    - make distclean
-  sudo: no
+    - name: Compile libvpx
+      ansible.builtin.shell: |
+        ./configure --prefix={{ ffmpeg_build_dir }} --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=nasm
+        make -j$(nproc)
+        make install
+      args:
+        chdir: "{{ ffmpeg_source_dir }}/libvpx"
+        creates: "{{ ffmpeg_build_dir }}/lib/libvpx.a"
+      environment: "{{ ffmpeg_env }}"
 
-- name: compile x264
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  sudo: no
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/x264"
-    creates: "{{ ffmpeg_bin_dir }}/x264"
-  with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --bindir={{ ffmpeg_bin_dir }} --enable-static
-    - make
-    - make install
-    - make distclean
+    - name: Clone FFmpeg
+      ansible.builtin.git:
+        repo: https://github.com/FFmpeg/FFmpeg.git
+        dest: "{{ ffmpeg_source_dir }}/ffmpeg"
+        depth: 1
+        version: "n7.0"
 
+    - name: Compile FFmpeg
+      ansible.builtin.shell: |
+        ./configure {{ ffmpeg_configure_options }} --enable-libfdk-aac
+        make -j$(nproc)
+        make install
+      args:
+        chdir: "{{ ffmpeg_source_dir }}/ffmpeg"
+        creates: "{{ ffmpeg_bin_dir }}/ffmpeg"
+      environment: "{{ ffmpeg_env }}"
 
-- name: compile x265
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  sudo: no
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/x265/build/linux"
-    creates: "{{ ffmpeg_bin_dir }}/x265"
-  with_items:
-    - cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX={{ ffmpeg_build_dir }} -DENABLE_SHARED:bool=off ../../source
-    - make
-    - make install
-    - make clean
+- name: Verify FFmpeg installation
+  ansible.builtin.command:
+    cmd: "{{ ffmpeg_bin_dir }}/ffmpeg -version"
+  changed_when: false
+  register: ffmpeg_version
 
-- name: compile fdk-aac
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  sudo: no
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/fdk-aac"
-    creates: "{{ ffmpeg_build_dir }}/lib/libfdk-aac.a"
-  with_items:
-    - autoreconf -fiv
-    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
-    - make
-    - make install
-    - make distclean
-
-- name: compile libmp3lame
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  sudo: no
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/libmp3lame"
-    creates: "{{ ffmpeg_build_dir }}/libmp3lame"
-  with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --enable-nasm --disable-shared
-    - make
-    - make install
-    - make distclean
-
-- name: compile libopus
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  sudo: no
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/opus-1.1"
-    creates: "{{ ffmpeg_build_dir }}/lib/libopus.a"
-  with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-shared
-    - make
-    - make install
-    - make distclean
-
-- name: compile libvpx
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/libvpx"
-    creates: "{{ ffmpeg_build_dir }}/libvpx"
-  with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --disable-examples --disable-unit-tests
-    - make
-    - make install
-    - make clean
-  sudo: no
-
-- name: compile ffmpeg
-  environment: ffmpeg_env
-  command: "{{ item }}"
-  sudo: no
-  args:
-    chdir: "{{ ffmpeg_source_dir }}/ffmpeg"
-    creates: "{{ ffmpeg_bin_dir }}/ffmpeg"
-  with_items:
-    - ./configure --prefix={{ ffmpeg_build_dir }} --pkg-config-flags="--static" --extra-cflags=-I{{ ffmpeg_build_dir }}/include --extra-ldflags=-L{{ ffmpeg_build_dir }}/lib --bindir={{ ffmpeg_bin_dir }} --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree
-    - make
-    - make install
-    - make distclean
-
-- name: update manpath map
-  shell: 'echo "MANPATH_MAP {{ ffmpeg_bin_dir }} {{ ffmpeg_build_dir }}/share/man" >> /etc/manpath.config'
-  tags: manpath
+- name: Display FFmpeg version
+  ansible.builtin.debug:
+    msg: "{{ ffmpeg_version.stdout_lines[0] }}"

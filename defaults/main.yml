@@ -1,24 +1,79 @@
 ---
 # defaults file for ffmpeg build role
-ffmpeg_root_dir: "/home/{{ ansible_ssh_user }}"
 
-ffmpeg_build_dir: "{{ ffmpeg_root_dir }}/ffmpeg_build_dir"
+# Action to perform: install, uninstall, update
+ffmpeg_role_action: install
+
+# Remove apt dependencies on uninstall
+ffmpeg_remove_deps: false
+
+# Directory configuration
+ffmpeg_root_dir: "/home/{{ ansible_user }}"
+ffmpeg_build_dir: "{{ ffmpeg_root_dir }}/ffmpeg_build"
 ffmpeg_source_dir: "{{ ffmpeg_root_dir }}/ffmpeg_sources"
 ffmpeg_bin_dir: "{{ ffmpeg_root_dir }}/bin"
+
+# Environment for compilation
 ffmpeg_env:
   PKG_CONFIG_PATH: "{{ ffmpeg_build_dir }}/lib/pkgconfig"
   PATH: "{{ ffmpeg_bin_dir }}:{{ ansible_env.PATH }}"
 
-ffmpeg_deps:
+# Opus version (check https://opus-codec.org/downloads/ for latest)
+ffmpeg_opus_version: "1.5.2"
+
+# APT dependencies for FFmpeg compilation
+ffmpeg_build_deps:
+  - autoconf
+  - automake
+  - build-essential
   - cmake
+  - git
+  - libtool
+  - nasm
+  - pkg-config
+  - texinfo
+
+# Library dependencies
+ffmpeg_lib_deps:
   - libass-dev
   - libfreetype6-dev
+  - libgnutls28-dev
+  - libmp3lame-dev
+  - libopus-dev
+  - libsdl2-dev
   - libtheora-dev
-  - libtool
+  - libva-dev
+  - libvdpau-dev
   - libvorbis-dev
-  - pkg-config 
-  - texi2html
+  - libvpx-dev
+  - libx264-dev
+  - libx265-dev
+  - libnuma-dev
   - zlib1g-dev
 
-ffmpeg_role_action: 'install'
-ffmpeg_remove_deps: false
+# Combined deps for backward compatibility
+ffmpeg_deps: "{{ ffmpeg_build_deps + ffmpeg_lib_deps }}"
+
+# Whether to compile codecs from source (true) or use system packages (false)
+# System packages are faster to install but may be older versions
+ffmpeg_compile_codecs: false
+
+# FFmpeg configure options
+ffmpeg_configure_options: >-
+  --prefix={{ ffmpeg_build_dir }}
+  --pkg-config-flags="--static"
+  --extra-cflags="-I{{ ffmpeg_build_dir }}/include"
+  --extra-ldflags="-L{{ ffmpeg_build_dir }}/lib"
+  --bindir={{ ffmpeg_bin_dir }}
+  --enable-gpl
+  --enable-gnutls
+  --enable-libass
+  --enable-libfreetype
+  --enable-libmp3lame
+  --enable-libopus
+  --enable-libtheora
+  --enable-libvorbis
+  --enable-libvpx
+  --enable-libx264
+  --enable-libx265
+  --enable-nonfree

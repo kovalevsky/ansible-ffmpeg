@@ -1,16 +1,26 @@
 ---
 galaxy_info:
-  author: "Sergey Kovalevsky"
+  author: Sergey Kovalevsky
+  namespace: kovalevsky
+  description: Compile FFmpeg and major codecs from source on Ubuntu/Debian
   company: HttpLab
-  license: BSD
-  min_ansible_version: 1.4
+  license: BSD-3-Clause
+  min_ansible_version: "2.10"
   platforms:
     - name: Ubuntu
       versions:
-        - all
+        - focal    # 20.04
+        - jammy    # 22.04
+        - noble    # 24.04
     - name: Debian
       versions:
-        - all
-  categories:
-    - system
+        - bullseye  # 11
+        - bookworm  # 12
+  galaxy_tags:
+    - ffmpeg
+    - video
+    - encoding
+    - multimedia
+    - compilation
+
 dependencies: []
