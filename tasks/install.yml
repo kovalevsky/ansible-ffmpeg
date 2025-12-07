@@ -136,7 +136,9 @@
 
     - name: Compile libvpx
       ansible.builtin.shell: |
-        ./configure --prefix={{ ffmpeg_build_dir }} --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=nasm
+        ./configure --prefix={{ ffmpeg_build_dir }} \
+          --disable-examples --disable-unit-tests \
+          --enable-vp9-highbitdepth --as=nasm
         make -j$(nproc)
         make install
       args:
